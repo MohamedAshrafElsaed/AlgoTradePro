@@ -8,10 +8,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useTranslation } from '@/composables/useTranslation';
 import { logout } from '@/routes';
-import { edit } from '@/routes/dashboard/settings/profile';
 import type { User } from '@/types';
 import { Link, router } from '@inertiajs/vue3';
 import { LogOut, Settings } from 'lucide-vue-next';
+import { edit } from '@/routes/profile';
 
 interface Props {
     user: User;

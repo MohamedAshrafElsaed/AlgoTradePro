@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -38,6 +39,14 @@ class HandleInertiaRequests extends Middleware
     {
         [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
 
+        $locale = App::getLocale();
+
+        // Load translations from JSON file
+        $translationsPath = lang_path("{$locale}.json");
+        $translations = file_exists($translationsPath)
+            ? json_decode(file_get_contents($translationsPath), true)
+            : [];
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
@@ -46,6 +55,10 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+
+            // Share current locale and translations with all pages
+            'locale' => $locale,
+            'translations' => $translations,
         ];
     }
 }

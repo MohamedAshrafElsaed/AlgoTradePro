@@ -6,7 +6,7 @@ import type { DefineComponent } from 'vue';
 import { createApp, h } from 'vue';
 import { initializeTheme } from './composables/useAppearance';
 
-const appName = import.meta.env.VITE_APP_NAME || 'WhatsApp Sender Pro';
+const appName = import.meta.env.VITE_APP_NAME || 'Algo Trade Pro';
 
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),

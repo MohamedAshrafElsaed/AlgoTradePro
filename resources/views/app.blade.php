@@ -22,29 +22,11 @@
     ];
     $seo = $seoData[$locale];
 @endphp
+
     <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}"
       dir="{{ $isArabic ? 'rtl' : 'ltr' }}" @class(['dark' => ($appearance ?? 'system') == 'dark'])>
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    {{-- Inline script to detect system dark mode preference and apply it immediately --}}
-    <script>
-        (function() {
-            const appearance = '{{ $appearance ?? "system" }}';
-
-            if (appearance === 'system') {
-                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-                if (prefersDark) {
-                    document.documentElement.classList.add('dark');
-                }
-            }
-        })();
-    </script>
-
-    {{-- Inline style to set the HTML background color based on our theme in app.css --}}
     <style>
         html {
             background-color: oklch(1 0 0);
@@ -54,182 +36,11 @@
             background-color: oklch(0.145 0 0);
         }
     </style>
-
-    {{-- Prevent indexing of auth pages --}}
     @if(request()->is('login') || request()->is('register') || request()->is('password/*'))
         <meta name="robots" content="noindex, nofollow">
     @else
         <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
     @endif
-
-    {{-- SEO Meta Tags --}}
-    <title inertia>{{ $seo['title'] }}</title>
-    <meta name="description" content="{{ $seo['description'] }}">
-    <meta name="keywords" content="{{ $seo['keywords'] }}">
-    <meta name="author" content="{{ $appName }}">
-    <meta name="googlebot" content="index, follow">
-    <meta name="bingbot" content="index, follow">
-    <meta name="language" content="{{ $isArabic ? 'Arabic' : 'English' }}">
-    <meta name="revisit-after" content="7 days">
-    <meta name="rating" content="general">
-    <meta name="distribution" content="global">
-    <meta name="geo.region" content="EG">
-    <meta name="geo.placename" content="Egypt">
-    <meta name="referrer" content="origin-when-cross-origin">
-
-    {{-- Mobile Meta Tags --}}
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="{{ $appName }}">
-    <meta name="application-name" content="{{ $appName }}">
-    <meta name="theme-color" content="#25D366">
-    <meta name="msapplication-TileColor" content="#25D366">
-
-    {{-- Open Graph Meta Tags --}}
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="{{ $seo['og_title'] }}">
-    <meta property="og:description" content="{{ $seo['og_description'] }}">
-    <meta property="og:url" content="{{ url()->current() }}">
-    <meta property="og:site_name" content="{{ $appName }}">
-    <meta property="og:locale" content="{{ $isArabic ? 'ar_EG' : 'en_US' }}">
-    <meta property="og:locale:alternate" content="{{ $isArabic ? 'en_US' : 'ar_EG' }}">
-    <meta property="og:image" content="{{ asset('android-icon-192x192.png') }}">
-    <meta property="og:image:secure_url" content="{{ asset('android-icon-192x192.png') }}">
-    <meta property="og:image:width" content="192">
-    <meta property="og:image:height" content="192">
-    <meta property="og:image:type" content="image/png">
-    <meta property="og:image:alt" content="{{ $appName }} Logo">
-
-    {{-- Twitter Card Meta Tags --}}
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{{ $seo['og_title'] }}">
-    <meta name="twitter:description" content="{{ $seo['og_description'] }}">
-    <meta name="twitter:image" content="{{ asset('android-icon-192x192.png') }}">
-    <meta name="twitter:image:alt" content="{{ $appName }} Logo">
-    <meta name="twitter:site" content="@{{ $appName }}">
-    <meta name="twitter:creator" content="@{{ $appName }}">
-
-    {{-- Alternate Languages --}}
-    <link rel="alternate" hreflang="en" href="{{ url('/?lang=en') }}">
-    <link rel="alternate" hreflang="ar" href="{{ url('/?lang=ar') }}">
-    <link rel="alternate" hreflang="x-default" href="{{ url('/') }}">
-
-    {{-- Canonical URL --}}
-    <link rel="canonical" href="{{ url()->current() }}">
-
-    <link rel="icon" href="/favicon.ico" sizes="any">
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-
-    {{-- DNS Prefetch & Preconnect for Performance --}}
-    <link rel="dns-prefetch" href="//fonts.bunny.net">
-    <link rel="preconnect" href="https://fonts.bunny.net" crossorigin>
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
-
-    @if(app()->isProduction())
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-VSMTG5C8VC"></script>
-        <script>
-            window.dataLayer = window.dataLayer || [];
-
-            function gtag() {
-                dataLayer.push(arguments);
-            }
-
-            gtag('js', new Date());
-            gtag('config', 'G-VSMTG5C8VC');
-        </script>
-        <script>
-            !function(f, b, e, v, n, t, s) {
-                if (f.fbq) return;
-                n = f.fbq = function() {
-                    n.callMethod ?
-                        n.callMethod.apply(n, arguments) : n.queue.push(arguments);
-                };
-                if (!f._fbq) f._fbq = n;
-                n.push = n;
-                n.loaded = !0;
-                n.version = '2.0';
-                n.queue = [];
-                t = b.createElement(e);
-                t.async = !0;
-                t.src = v;
-                s = b.getElementsByTagName(e)[0];
-                s.parentNode.insertBefore(t, s);
-            }(window, document, 'script',
-                'https://connect.facebook.net/en_US/fbevents.js');
-            fbq('init', '1146830717394931');
-            fbq('track', 'PageView');
-        </script>
-        <noscript>
-            <img height="1" width="1" style="display:none"
-                 src="https://www.facebook.com/tr?id=1146830717394931&ev=PageView&noscript=1"
-            />
-        </noscript>
-    @endif
-
-    {{-- Structured Data (JSON-LD) - Organization Schema --}}
-    <script type="application/ld+json">
-        {!! json_encode([
-            '@context' => 'https://schema.org',
-         "@type"=> "Organization",
-         "name"=> config('app.name'),
-         "url"=> url('/'),
-         "logo"=> asset('android-icon-192x192.png'),
-         "description"=> "Professional WhatsApp Bulk Messaging System for businesses",
-         "address"=> [
-           "@type"=> "PostalAddress",
-           "addressCountry"=> "EG"
-         ],
-         "contactPoint"=> [
-           "@type"=> "ContactPoint",
-           "contactType"=> "Customer Service",
-           "availableLanguage"=> ["English", "Arabic"]
-         ]
-       ], JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) !!}
-    </script>
-
-    {{-- Website Schema --}}
-    <script type="application/ld+json">
-        {!! json_encode([
-         '@context'=> "https://schema.org",
-         "@type"=> "WebSite",
-         "name"=> config('app.name'),
-         "url"=> url('/'),
-         "potentialAction"=> [
-           "@type"=> "SearchAction",
-           "target"=> [
-             "@type"=> "EntryPoint",
-             "urlTemplate"=> url('/')."/search?q={search_term_string}"
-           ],
-           "query-input"=> "required name=search_term_string"
-         ],
-         "inLanguage"=> ["en", "ar"]
-       ], JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) !!}
-    </script>
-
-    {{-- SoftwareApplication Schema --}}
-    <script type="application/ld+json">
-        {!! json_encode([
-          '@context' => "https://schema.org",
-          '@type'=> "SoftwareApplication",
-          'name' => config('app.name'),
-          'applicationCategory' => "BusinessApplication",
-          'operatingSystem' => "Web Browser",
-          'offers' => [
-            "@type"=> "Offer",
-            "price"=> "0",
-            "priceCurrency"=> "EGP"
-          ],
-          "aggregateRating"=> [
-            "@type"=> "AggregateRating",
-            "ratingValue"=> "4.8",
-            "ratingCount"=> "150"
-          ]
-        ], JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) !!}
-    </script>
-
     @vite(['resources/js/app.ts', "resources/js/pages/{$page['component']}.vue"])
     @inertiaHead
 </head>

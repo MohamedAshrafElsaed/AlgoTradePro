@@ -13,24 +13,10 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { useTranslation } from '@/composables/useTranslation';
-import { index as dashboard } from '@/routes/dashboard';
-import { index as campaignsIndex } from '@/routes/dashboard/campaigns';
-import { index as contactsIndex } from '@/routes/dashboard/contacts';
-import { index as reportsIndex } from '@/routes/dashboard/reports';
-import { edit as settingsProfile } from '@/routes/dashboard/settings/profile';
-import { index as templatesIndex } from '@/routes/dashboard/templates';
-import { index as subscriptionIndex } from '@/routes/subscription';
+import { dashboard } from '@/routes';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import {
-    BarChart3,
-    CreditCard,
-    FileText,
-    LayoutGrid,
-    MessageSquare,
-    Settings,
-    Users,
-} from 'lucide-vue-next';
+import { LayoutGrid } from 'lucide-vue-next';
 import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
 
@@ -51,36 +37,6 @@ const mainNavItems: NavItem[] = [
         title: t('nav.dashboard', 'Dashboard'),
         href: dashboard(),
         icon: LayoutGrid,
-    },
-    {
-        title: t('nav.campaigns', 'Campaigns'),
-        href: campaignsIndex(),
-        icon: MessageSquare,
-    },
-    {
-        title: t('nav.contacts', 'Contacts'),
-        href: contactsIndex(),
-        icon: Users,
-    },
-    {
-        title: t('nav.templates', 'Templates'),
-        href: templatesIndex(),
-        icon: FileText,
-    },
-    {
-        title: t('nav.reports', 'Reports'),
-        href: reportsIndex(),
-        icon: BarChart3,
-    },
-    {
-        title: t('nav.subscription', 'Subscription'),
-        href: subscriptionIndex(),
-        icon: CreditCard,
-    },
-    {
-        title: t('nav.settings', 'Settings'),
-        href: settingsProfile(),
-        icon: Settings,
     },
 ];
 

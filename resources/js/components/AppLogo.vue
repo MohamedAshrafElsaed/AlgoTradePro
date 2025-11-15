@@ -8,7 +8,7 @@ const locale = computed(() => page.props.locale || 'en');
 const isRTL = computed(() => locale.value === 'ar');
 
 const appName = computed(() => {
-    return isRTL.value ? 'واتساب سيندر برو' : 'WhatsApp Sender Pro';
+    return isRTL.value ? 'الجو تريد برو' : 'Algo Trade Pro';
 });
 </script>
 

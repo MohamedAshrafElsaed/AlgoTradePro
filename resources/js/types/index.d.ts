@@ -3,6 +3,24 @@ import type { LucideIcon } from 'lucide-vue-next';
 
 // ==================== User & Authentication ====================
 
+
+
+// If you need to extend the existing InertiaPageProps
+declare module '@inertiajs/core' {
+    interface PageProps {
+        auth: {
+            user: User | null;
+        };
+        locale: string;
+        translations: Record<string, any>;
+        name: string;
+        quote: {
+            message: string;
+            author: string;
+        };
+        sidebarOpen: boolean;
+    }
+}
 export interface User {
     id: number;
     first_name: string;
@@ -250,9 +268,16 @@ export type BreadcrumbItemType = BreadcrumbItem;
 export type AppPageProps<
     T extends Record<string, unknown> = Record<string, unknown>,
 > = T & {
+    auth: {
+        user: User | null;
+    };
+    locale: string;
+    translations: Record<string, any>;
     name: string;
-    quote: { message: string; author: string };
-    auth: Auth;
+    quote: {
+        message: string;
+        author: string;
+    };
     sidebarOpen: boolean;
 };
 

@@ -24,7 +24,7 @@ const { t, isRTL } = useTranslation();
                         <MessageCircle class="size-6 text-white" />
                     </div>
                     <span class="text-xl font-bold">{{
-                        t('landing.brand_name', 'WA Sender Pro')
+                        t('landing.brand_name', 'AlgoTradePro')
                     }}</span>
                 </Link>
 
@@ -44,7 +44,7 @@ const { t, isRTL } = useTranslation();
         <footer class="border-t border-border bg-muted/50 py-8">
             <div class="container mx-auto px-4 text-center">
                 <p class="text-sm text-muted-foreground">
-                    © 2024 {{ t('landing.brand_name', 'WA Sender Pro') }}.
+                    © 2024 {{ t('landing.brand_name', 'AlgoTradePro') }}.
                     {{ t('landing.footer.rights', 'All rights reserved.') }}
                 </p>
             </div>

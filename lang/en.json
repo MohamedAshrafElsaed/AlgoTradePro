@@ -1,1 +1,143 @@
-{}
+{
+    "auth": {
+        "register": {
+            "title": "Register",
+            "name": "Full Name",
+            "email": "Email Address",
+            "password": "Password",
+            "password_confirmation": "Confirm Password",
+            "description": "Start trading with AI-powered recommendations",
+            "have_account": "Already have an account?",
+            "login": "Log in",
+            "submit": "Create Account"
+        },
+        "login": {
+            "title": "Log in",
+            "email": "Email address",
+            "password": "Password",
+            "description": "Enter your credentials to access your trading dashboard",
+            "forgot_password": "Forgot password?",
+            "remember_me": "Remember me",
+            "submit": "Log in",
+            "no_account": "Don't have an account?",
+            "sign_up": "Sign up"
+        },
+        "placeholders": {
+            "name": "John Doe",
+            "email": "email@example.com",
+            "password": "Min 8 characters",
+            "password_confirmation": "Confirm password"
+        }
+    },
+    "landing": {
+        "brand_name": "AlgoTradePro",
+        "meta": {
+            "title": "AlgoTradePro - AI-Powered Trading Recommendations",
+            "description": "Professional algorithmic trading platform with AI-powered stock recommendations"
+        },
+        "nav": {
+            "features": "Features",
+            "how_it_works": "How It Works",
+            "login": "Login",
+            "get_started": "Get Started"
+        },
+        "hero": {
+            "title": "Trade Smarter with",
+            "subtitle": "AI-Powered Insights",
+            "description": "Get real-time stock recommendations powered by advanced algorithms. Make informed trading decisions with confidence.",
+            "cta": "Start Free Trial",
+            "cta_secondary": "Login"
+        },
+        "stats": {
+            "users": "Active Traders",
+            "volume": "Trading Volume",
+            "accuracy": "Signal Accuracy"
+        },
+        "features": {
+            "title": "Powerful Features",
+            "subtitle": "Everything you need for successful trading",
+            "ai": {
+                "title": "AI-Powered Analysis",
+                "desc": "Advanced algorithms analyze market trends in real-time"
+            },
+            "signals": {
+                "title": "Smart Trading Signals",
+                "desc": "Get instant buy/sell recommendations"
+            },
+            "analytics": {
+                "title": "Real-time Analytics",
+                "desc": "Track portfolio performance with detailed insights"
+            },
+            "security": {
+                "title": "Secure & Reliable",
+                "desc": "Bank-level security for your trading data"
+            }
+        },
+        "how_it_works": {
+            "title": "How It Works",
+            "subtitle": "Start trading in three simple steps",
+            "step1": {
+                "title": "Create Your Account",
+                "desc": "Sign up in seconds and access our trading platform"
+            },
+            "step2": {
+                "title": "Get AI Recommendations",
+                "desc": "Receive real-time trading signals based on market analysis"
+            },
+            "step3": {
+                "title": "Execute Trades",
+                "desc": "Make informed decisions and track your portfolio performance"
+            }
+        },
+        "cta": {
+            "title": "Ready to Start Trading?",
+            "subtitle": "Join thousands of traders making smarter decisions",
+            "button": "Create Free Account"
+        },
+        "footer": {
+            "rights": "All rights reserved."
+        }
+    },
+    "dashboard": {
+        "title": "Dashboard",
+        "welcome": "Welcome Back",
+        "subtitle": "Here's your trading overview for today",
+        "stats": {
+            "portfolio_value": "Portfolio Value",
+            "active_positions": "Active Positions",
+            "total_return": "Total Return",
+            "from_yesterday": "from yesterday"
+        },
+        "quick_actions": "Quick Actions",
+        "quick_actions_desc": "Access key trading features",
+        "actions": {
+            "view_signals": "View Trading Signals",
+            "view_signals_desc": "See latest AI recommendations",
+            "portfolio": "Manage Portfolio",
+            "portfolio_desc": "Track your positions",
+            "market_analysis": "Market Analysis",
+            "market_analysis_desc": "View market insights"
+        },
+        "recent_signals": "Recent Trading Signals",
+        "recent_signals_desc": "Latest AI-powered recommendations",
+        "confidence": "Confidence",
+        "getting_started": "Getting Started",
+        "getting_started_desc": "Follow these steps to start trading",
+        "step1": "Set Up Your Profile",
+        "step1_desc": "Complete your trading preferences",
+        "step2": "Connect Your Broker",
+        "step2_desc": "Link your trading account",
+        "step3": "Start Receiving Signals",
+        "step3_desc": "Get real-time trading recommendations"
+    },
+    "common": {
+        "save": "Save",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "edit": "Edit",
+        "submit": "Submit",
+        "loading": "Loading...",
+        "saving": "Saving...",
+        "completed": "Completed"
+    }
+}

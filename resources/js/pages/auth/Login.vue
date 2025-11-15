@@ -32,17 +32,13 @@ const { t } = useTranslation();
                     {{ t('auth.login.title', 'Log in to your account') }}
                 </h1>
                 <p class="mt-2 text-muted-foreground">
-                    {{
-                        t(
-                            'auth.login.description',
-                            'Enter your email and password below to log in',
-                        )
-                    }}
+                    {{ t('auth.login.description', 'Enter your credentials to access your trading dashboard') }}
                 </p>
             </div>
 
             <!-- Login Form -->
             <div class="rounded-lg border bg-card p-8 shadow-sm">
+                <!-- Status Message -->
                 <div
                     v-if="status"
                     class="mb-4 text-center text-sm font-medium text-green-600"
@@ -66,12 +62,7 @@ const { t } = useTranslation();
                             <Input
                                 id="email"
                                 :class="{ 'border-destructive': errors.email }"
-                                :placeholder="
-                                    t(
-                                        'auth.placeholders.email',
-                                        'email@example.com',
-                                    )
-                                "
+                                :placeholder="t('auth.placeholders.email', 'email@example.com')"
                                 :tabindex="1"
                                 autocomplete="email"
                                 autofocus
@@ -92,25 +83,15 @@ const { t } = useTranslation();
                                 <Link
                                     v-if="canResetPassword"
                                     :href="request()"
-                                    :tabindex="5"
-                                    class="text-sm font-medium text-[#25D366] hover:text-[#128C7E] hover:underline"
+                                    class="text-sm font-medium text-primary hover:underline"
                                 >
-                                    {{
-                                        t(
-                                            'auth.login.forgot_password',
-                                            'Forgot password?',
-                                        )
-                                    }}
+                                    {{ t('auth.login.forgot_password', 'Forgot password?') }}
                                 </Link>
                             </div>
                             <Input
                                 id="password"
-                                :class="{
-                                    'border-destructive': errors.password,
-                                }"
-                                :placeholder="
-                                    t('auth.placeholders.password', 'Password')
-                                "
+                                :class="{ 'border-destructive': errors.password }"
+                                :placeholder="t('auth.placeholders.password', 'Password')"
                                 :tabindex="2"
                                 autocomplete="current-password"
                                 name="password"
@@ -126,14 +107,8 @@ const { t } = useTranslation();
                                 class="flex cursor-pointer items-center space-x-3"
                                 for="remember"
                             >
-                                <Checkbox
-                                    id="remember"
-                                    :tabindex="3"
-                                    name="remember"
-                                />
-                                <span>{{
-                                    t('auth.login.remember_me', 'Remember me')
-                                }}</span>
+                                <Checkbox id="remember" :tabindex="3" name="remember" />
+                                <span>{{ t('auth.login.remember_me', 'Remember me') }}</span>
                             </Label>
                         </div>
 
@@ -141,14 +116,11 @@ const { t } = useTranslation();
                         <Button
                             :disabled="processing"
                             :tabindex="4"
-                            class="mt-2 w-full bg-[#25D366] hover:bg-[#128C7E]"
+                            class="mt-2 w-full bg-primary hover:bg-primary/90"
                             data-test="login-button"
                             type="submit"
                         >
-                            <Loader2
-                                v-if="processing"
-                                class="mr-2 h-4 w-4 animate-spin"
-                            />
+                            <Loader2 v-if="processing" class="mr-2 h-4 w-4 animate-spin" />
                             {{ t('auth.login.submit', 'Log in') }}
                         </Button>
                     </div>
@@ -158,13 +130,11 @@ const { t } = useTranslation();
                         v-if="canRegister"
                         class="text-center text-sm text-muted-foreground"
                     >
-                        {{
-                            t('auth.login.no_account', "Don't have an account?")
-                        }}
+                        {{ t('auth.login.no_account', "Don't have an account?") }}
                         <Link
                             :href="register()"
                             :tabindex="5"
-                            class="font-medium text-[#25D366] hover:text-[#128C7E] hover:underline"
+                            class="font-medium text-primary hover:underline"
                         >
                             {{ t('auth.login.sign_up', 'Sign up') }}
                         </Link>
