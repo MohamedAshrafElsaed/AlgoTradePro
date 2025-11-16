@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\CompanyFavoriteController;
+use App\Http\Controllers\CompanySubscriptionController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
 use Inertia\Inertia;
@@ -69,6 +72,29 @@ Route::middleware(['auth', 'verified'])->group(function () {
             return Inertia::render('Market/Index');
         })->name('index');
     });
+
+    // Companies
+    Route::get('companies', [CompanyController::class, 'index'])
+        ->name('companies.index');
+
+    Route::get('companies/favorites', [CompanyController::class, 'favorites'])
+        ->name('companies.favorites');
+
+    Route::get('companies/{company}', [CompanyController::class, 'show'])
+        ->name('companies.show');
+
+    Route::post('companies/{company}/favorite', [CompanyFavoriteController::class, 'store'])
+        ->name('companies.favorite.store');
+
+    Route::delete('companies/{company}/favorite', [CompanyFavoriteController::class, 'destroy'])
+        ->name('companies.favorite.destroy');
+
+    Route::post('companies/{company}/subscribe', [CompanySubscriptionController::class, 'store'])
+        ->name('companies.subscription.store');
+
+    Route::delete('companies/{company}/subscribe', [CompanySubscriptionController::class, 'destroy'])
+        ->name('companies.subscription.destroy');
+
 });
 
 // ==================== Settings Routes ====================

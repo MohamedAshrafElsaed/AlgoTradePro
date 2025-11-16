@@ -315,3 +315,64 @@ export interface OnboardingData {
     campaign_sent?: boolean;
     completed_at?: string;
 }
+
+// Add these types to your existing resources/js/types/index.d.ts file
+
+export interface CompanyType {
+    id: number;
+    name_en: string;
+    name_ar: string;
+    slug: string;
+}
+
+export interface Company {
+    id: number;
+    symbol: string;
+    name_en: string;
+    name_ar: string;
+    current_price: string;
+    price_change: string;
+    change_percentage: string;
+    description_en?: string;
+    description_ar?: string;
+    ceo?: string;
+    headquarter_en?: string;
+    headquarter_ar?: string;
+    type: CompanyType;
+    is_favorited: boolean;
+    is_subscribed?: boolean;
+    statistics?: CompanyStatistics;
+    news?: CompanyNews[];
+}
+
+export interface CompanyStatistics {
+    market_cap: string | null;
+    value_today: string | null;
+    adtv_6m: string | null;
+    eps: string | null;
+    pe_ratio: string | null;
+    dividend_yield: string | null;
+    week_52_high: string | null;
+    week_52_low: string | null;
+}
+
+export interface CompanyNews {
+    id: number;
+    title_en: string;
+    title_ar: string;
+    source: string;
+    url: string | null;
+    published_at: string;
+}
+
+export interface CompanySubscription {
+    notify_recommendations: boolean;
+    notify_updates: boolean;
+    notify_news: boolean;
+    notify_price_alerts: boolean;
+}
+
+export interface CompanyFilters {
+    search?: string;
+    type?: number;
+}
