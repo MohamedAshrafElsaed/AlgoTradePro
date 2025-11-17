@@ -2,14 +2,18 @@
 import AppSidebarLayout from '@/layouts/app/AppSidebarLayout.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useTranslation } from '@/composables/useTranslation';
-import type { Company } from '@/types';
+import type { Company, CompanyFilters, CompanyType } from '@/types';
 import { router, Head, Link } from '@inertiajs/vue3';
-import { Heart, Star, TrendingDown, TrendingUp } from 'lucide-vue-next';
-import { show as companyShow, index as companiesIndex } from '@/routes/companies';
-import { destroy as removeFavorite } from '@/routes/companies/favorite';
+import { Heart, Search, TrendingDown, TrendingUp, X } from 'lucide-vue-next';
+import { computed, ref } from 'vue';
+import { show as companyShow } from '@/routes/companies';
+import { store as addFavorite, destroy as removeFavorite } from '@/routes/companies/favorite';
 
 defineOptions({ layout: AppSidebarLayout });
 
@@ -18,68 +22,148 @@ interface Props {
         data: Company[];
         current_page: number;
         last_page: number;
+        per_page: number;
         total: number;
+        from: number;
+        to: number;
     };
+    types: CompanyType[];
+    filters: CompanyFilters;
 }
 
 const props = defineProps<Props>();
 const { t, isRTL } = useTranslation();
 
-const handleRemoveFavorite = (company: Company) => {
-    router.delete(removeFavorite({ company: company.id }), { preserveScroll: true });
+const search = ref(props.filters.search || '');
+const selectedType = ref(props.filters.type?.toString() || 'all');
+const isLoading = ref(false);
+
+const applyFilters = () => {
+    isLoading.value = true;
+    router.get(
+        '/companies',
+        {
+            search: search.value || undefined,
+            type: selectedType.value === 'all' ? undefined : selectedType.value,
+        },
+        {
+            preserveState: true,
+            preserveScroll: true,
+            onFinish: () => {
+                isLoading.value = false;
+            },
+        }
+    );
 };
 
-const formatPrice = (price: string) => {
-    return parseFloat(price).toFixed(5);
+const clearFilters = () => {
+    search.value = '';
+    selectedType.value = 'all';
+    applyFilters();
+};
+
+const toggleFavorite = (company: Company) => {
+    const route = company.is_favorited
+        ? removeFavorite({ company: company.id })
+        : addFavorite({ company: company.id });
+
+    router.post(route, {}, { preserveScroll: true });
+};
+
+const formatPrice = (price: string | null) => {
+    if (!price) return t('companies.not_available', 'N/A');
+    return parseFloat(price).toFixed(2);
+};
+
+const formatChange = (change: string | null) => {
+    if (!change) return '0.00';
+    const num = parseFloat(change);
+    return num >= 0 ? `+${num.toFixed(2)}` : num.toFixed(2);
 };
 
 const getCompanyName = (company: Company) => {
     return isRTL() ? company.name_ar : company.name_en;
 };
 
-const getTypeName = (company: Company) => {
-    return isRTL() ? company.type.name_ar : company.type.name_en;
+const getTypeName = (type: CompanyType) => {
+    return isRTL() ? type.name_ar : type.name_en;
 };
+
+const hasActiveFilters = computed(() => {
+    return search.value || (selectedType.value && selectedType.value !== 'all');
+});
 </script>
 
 <template>
     <div>
-        <Head :title="t('companies.favorites_title', 'Favorite Companies')" />
+        <Head :title="t('companies.title', 'Companies')" />
 
         <div class="container mx-auto space-y-6 px-4 py-8 sm:px-6 lg:px-8">
             <!-- Header -->
             <div :class="isRTL() ? 'text-right' : 'text-left'">
-                <div class="flex items-center gap-2">
-                    <Star class="h-6 w-6 fill-yellow-500 text-yellow-500" />
-                    <h1 class="text-3xl font-bold tracking-tight">
-                        {{ t('companies.favorites_title', 'Favorite Companies') }}
-                    </h1>
-                </div>
+                <h1 class="text-3xl font-bold tracking-tight">
+                    {{ t('companies.title', 'Companies') }}
+                </h1>
                 <p class="mt-2 text-muted-foreground">
-                    {{ t('companies.favorites_description', 'Companies you are tracking') }}
+                    {{ t('companies.browse_description', 'Browse and track your favorite companies') }}
                 </p>
             </div>
 
-            <!-- Empty State -->
-            <Card v-if="companies.data.length === 0">
-                <CardContent class="flex flex-col items-center py-16">
-                    <Star class="mb-4 h-16 w-16 text-muted-foreground" />
-                    <h3 class="mb-2 text-lg font-semibold">
-                        {{ t('companies.no_favorites', 'No favorite companies yet') }}
-                    </h3>
-                    <p class="mb-4 text-center text-sm text-muted-foreground">
-                        {{ t('companies.start_adding_favorites', 'Start adding companies to your favorites') }}
-                    </p>
-                    <Link :href="companiesIndex()">
-                        <Button>
-                            {{ t('companies.explore_companies', 'Explore Companies') }}
+            <!-- Filters Card -->
+            <Card>
+                <CardHeader>
+                    <CardTitle>{{ t('companies.search_title', 'Search Companies') }}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div class="flex flex-col gap-4 md:flex-row">
+                        <!-- Search -->
+                        <div class="relative flex-1">
+                            <Search :class="isRTL() ? 'right-3' : 'left-3'" class="absolute top-3 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                v-model="search"
+                                :class="isRTL() ? 'pr-10' : 'pl-10'"
+                                :placeholder="t('companies.search_placeholder', 'Search by symbol or name...')"
+                                @keyup.enter="applyFilters"
+                            />
+                        </div>
+
+                        <!-- Type Filter -->
+                        <Select v-model="selectedType" @update:model-value="applyFilters">
+                            <SelectTrigger class="w-full md:w-[200px]">
+                                <SelectValue :placeholder="t('companies.filter_by_type', 'Filter by type')" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">
+                                    {{ t('companies.all_types', 'All Types') }}
+                                </SelectItem>
+                                <SelectItem v-for="type in types" :key="type.id" :value="type.id.toString()">
+                                    {{ getTypeName(type) }}
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
+
+                        <!-- Clear Filters -->
+                        <Button
+                            v-if="hasActiveFilters"
+                            variant="outline"
+                            @click="clearFilters"
+                        >
+                            <X class="mr-2 h-4 w-4" />
+                            {{ t('companies.clear_filters', 'Clear') }}
                         </Button>
-                    </Link>
+                    </div>
                 </CardContent>
             </Card>
 
+            <!-- Results Info -->
+            <div :class="isRTL() ? 'text-right' : 'text-left'" class="text-sm text-muted-foreground">
+                {{ t('companies.showing', 'Showing') }} {{ companies.from || 0 }}-{{ companies.to || 0 }}
+                {{ t('companies.of', 'of') }} {{ companies.total }}
+                {{ t('companies.results', 'results') }}
+            </div>
+
             <!-- Desktop Table -->
-            <Card v-else class="hidden md:block">
+            <Card class="hidden md:block">
                 <Table>
                     <TableHeader>
                         <TableRow>
@@ -104,7 +188,19 @@ const getTypeName = (company: Company) => {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        <TableRow v-for="company in companies.data" :key="company.id">
+                        <!-- Loading State -->
+                        <TableRow v-if="isLoading">
+                            <TableCell colspan="6">
+                                <div class="space-y-2 py-4">
+                                    <Skeleton class="h-8 w-full" />
+                                    <Skeleton class="h-8 w-full" />
+                                    <Skeleton class="h-8 w-full" />
+                                </div>
+                            </TableCell>
+                        </TableRow>
+
+                        <!-- Data Rows -->
+                        <TableRow v-for="company in companies.data" v-else :key="company.id">
                             <TableCell class="font-medium">
                                 <Link :href="companyShow({ company: company.id })" class="hover:underline">
                                     {{ company.symbol }}
@@ -112,8 +208,8 @@ const getTypeName = (company: Company) => {
                             </TableCell>
                             <TableCell>{{ getCompanyName(company) }}</TableCell>
                             <TableCell>
-                                <Badge :variant="company.type.slug === 'stock' ? 'default' : 'secondary'">
-                                    {{ getTypeName(company) }}
+                                <Badge :variant="company.type?.slug === 'stock' ? 'default' : 'secondary'">
+                                    {{ company.type ? getTypeName(company.type) : 'N/A' }}
                                 </Badge>
                             </TableCell>
                             <TableCell class="font-mono">
@@ -124,20 +220,20 @@ const getTypeName = (company: Company) => {
                                     <span
                                         :class="[
                                             'font-mono',
-                                            parseFloat(company.price_change) >= 0
+                                            parseFloat(company.price_change || '0') >= 0
                                                 ? 'text-green-600'
                                                 : 'text-red-600'
                                         ]"
                                     >
-                                        {{ parseFloat(company.price_change) >= 0 ? '+' : '' }}{{ parseFloat(company.price_change).toFixed(5) }}
+                                        {{ formatChange(company.price_change) }}
                                     </span>
                                     <Badge
-                                        :variant="parseFloat(company.price_change) >= 0 ? 'default' : 'destructive'"
+                                        :variant="parseFloat(company.price_change || '0') >= 0 ? 'default' : 'destructive'"
                                         class="gap-1"
                                     >
-                                        <TrendingUp v-if="parseFloat(company.price_change) >= 0" class="h-3 w-3" />
+                                        <TrendingUp v-if="parseFloat(company.price_change || '0') >= 0" class="h-3 w-3" />
                                         <TrendingDown v-else class="h-3 w-3" />
-                                        {{ company.change_percentage }}%
+                                        {{ company.change_percentage || '0.00' }}%
                                     </Badge>
                                 </div>
                             </TableCell>
@@ -145,10 +241,27 @@ const getTypeName = (company: Company) => {
                                 <Button
                                     size="icon"
                                     variant="ghost"
-                                    @click="handleRemoveFavorite(company)"
+                                    @click="toggleFavorite(company)"
                                 >
-                                    <Heart class="h-4 w-4 fill-red-500 text-red-500" />
+                                    <Heart
+                                        :class="company.is_favorited ? 'fill-red-500 text-red-500' : ''"
+                                        class="h-4 w-4"
+                                    />
                                 </Button>
+                            </TableCell>
+                        </TableRow>
+
+                        <!-- Empty State -->
+                        <TableRow v-if="!isLoading && companies.data.length === 0">
+                            <TableCell colspan="6">
+                                <div class="py-12 text-center">
+                                    <p class="text-muted-foreground">
+                                        {{ t('companies.no_results', 'No companies found') }}
+                                    </p>
+                                    <p class="mt-1 text-sm text-muted-foreground">
+                                        {{ t('companies.try_different_filters', 'Try adjusting your search or filters') }}
+                                    </p>
+                                </div>
                             </TableCell>
                         </TableRow>
                     </TableBody>
@@ -156,8 +269,16 @@ const getTypeName = (company: Company) => {
             </Card>
 
             <!-- Mobile Cards -->
-            <div v-if="companies.data.length > 0" class="grid gap-4 md:hidden">
-                <Card v-for="company in companies.data" :key="company.id">
+            <div class="grid gap-4 md:hidden">
+                <!-- Loading State -->
+                <Card v-if="isLoading" v-for="i in 3" :key="i">
+                    <CardContent class="p-4">
+                        <Skeleton class="h-24 w-full" />
+                    </CardContent>
+                </Card>
+
+                <!-- Data Cards -->
+                <Card v-for="company in companies.data" v-else :key="company.id">
                     <CardContent class="p-4">
                         <div class="flex items-start justify-between">
                             <div class="flex-1">
@@ -167,16 +288,19 @@ const getTypeName = (company: Company) => {
                                         {{ getCompanyName(company) }}
                                     </div>
                                 </Link>
-                                <Badge :variant="company.type.slug === 'stock' ? 'default' : 'secondary'" class="mt-2">
-                                    {{ getTypeName(company) }}
+                                <Badge :variant="company.type?.slug === 'stock' ? 'default' : 'secondary'" class="mt-2">
+                                    {{ company.type ? getTypeName(company.type) : 'N/A' }}
                                 </Badge>
                             </div>
                             <Button
                                 size="icon"
                                 variant="ghost"
-                                @click="handleRemoveFavorite(company)"
+                                @click="toggleFavorite(company)"
                             >
-                                <Heart class="h-5 w-5 fill-red-500 text-red-500" />
+                                <Heart
+                                    :class="company.is_favorited ? 'fill-red-500 text-red-500' : ''"
+                                    class="h-5 w-5"
+                                />
                             </Button>
                         </div>
 
@@ -197,21 +321,33 @@ const getTypeName = (company: Company) => {
                                     <span
                                         :class="[
                                             'font-mono text-sm font-semibold',
-                                            parseFloat(company.price_change) >= 0
+                                            parseFloat(company.price_change || '0') >= 0
                                                 ? 'text-green-600'
                                                 : 'text-red-600'
                                         ]"
                                     >
-                                        {{ company.change_percentage }}%
+                                        {{ company.change_percentage || '0.00' }}%
                                     </span>
                                     <TrendingUp
-                                        v-if="parseFloat(company.price_change) >= 0"
+                                        v-if="parseFloat(company.price_change || '0') >= 0"
                                         class="h-3 w-3 text-green-600"
                                     />
                                     <TrendingDown v-else class="h-3 w-3 text-red-600" />
                                 </div>
                             </div>
                         </div>
+                    </CardContent>
+                </Card>
+
+                <!-- Empty State -->
+                <Card v-if="!isLoading && companies.data.length === 0">
+                    <CardContent class="py-12 text-center">
+                        <p class="text-muted-foreground">
+                            {{ t('companies.no_results', 'No companies found') }}
+                        </p>
+                        <p class="mt-1 text-sm text-muted-foreground">
+                            {{ t('companies.try_different_filters', 'Try adjusting your search or filters') }}
+                        </p>
                     </CardContent>
                 </Card>
             </div>
@@ -225,7 +361,7 @@ const getTypeName = (company: Company) => {
                 <Button
                     :disabled="companies.current_page === 1"
                     variant="outline"
-                    @click="router.get(`/companies/favorites?page=${companies.current_page - 1}`)"
+                    @click="router.get(`/companies?page=${companies.current_page - 1}`, { search: search, type: selectedType === 'all' ? undefined : selectedType })"
                 >
                     {{ t('companies.previous', 'Previous') }}
                 </Button>
@@ -237,7 +373,7 @@ const getTypeName = (company: Company) => {
                 <Button
                     :disabled="companies.current_page === companies.last_page"
                     variant="outline"
-                    @click="router.get(`/companies/favorites?page=${companies.current_page + 1}`)"
+                    @click="router.get(`/companies?page=${companies.current_page + 1}`, { search: search, type: selectedType === 'all' ? undefined : selectedType })"
                 >
                     {{ t('companies.next', 'Next') }}
                 </Button>

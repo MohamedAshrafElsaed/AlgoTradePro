@@ -2,30 +2,22 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Company;
 use Illuminate\Http\RedirectResponse;
 
-
 class CompanyFavoriteController extends Controller
 {
-    /**
-     * Add company to favorites
-     */
-    public function store(Request $request, Company $company): RedirectResponse
+    public function store(Company $company): RedirectResponse
     {
-        $request->user()->favoriteCompanies()->syncWithoutDetaching($company->id);
+        auth()->user()->favoriteCompanies()->syncWithoutDetaching([$company->id]);
 
-        return back()->with('message', __('companies.favorite_added'));
+        return back()->with('success', __('companies.added_to_favorites'));
     }
 
-    /**
-     * Remove company from favorites
-     */
-    public function destroy(Request $request, Company $company): RedirectResponse
+    public function destroy(Company $company): RedirectResponse
     {
-        $request->user()->favoriteCompanies()->detach($company->id);
+        auth()->user()->favoriteCompanies()->detach($company->id);
 
-        return back()->with('message', __('companies.favorite_removed'));
+        return back()->with('success', __('companies.removed_from_favorites'));
     }
 }

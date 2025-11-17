@@ -8,9 +8,6 @@ use Illuminate\Http\Request;
 
 class CompanySubscriptionController extends Controller
 {
-    /**
-     * Subscribe to company notifications
-     */
     public function store(Request $request, Company $company): RedirectResponse
     {
         $validated = $request->validate([
@@ -20,25 +17,20 @@ class CompanySubscriptionController extends Controller
             'notify_price_alerts' => 'boolean',
         ]);
 
-        $request->user()->subscribedCompanies()->syncWithoutDetaching([
-            $company->id => [
-                'notify_recommendations' => $validated['notify_recommendations'] ?? true,
-                'notify_updates' => $validated['notify_updates'] ?? true,
-                'notify_news' => $validated['notify_news'] ?? false,
-                'notify_price_alerts' => $validated['notify_price_alerts'] ?? false,
-            ]
-        ]);
+        auth()->user()->companySubscriptions()->updateOrCreate(
+            ['company_id' => $company->id],
+            $validated
+        );
 
-        return back()->with('message', __('companies.subscription_updated'));
+        return back()->with('success', __('companies.subscription_updated'));
     }
 
-    /**
-     * Unsubscribe from company notifications
-     */
-    public function destroy(Request $request, Company $company): RedirectResponse
+    public function destroy(Company $company): RedirectResponse
     {
-        $request->user()->subscribedCompanies()->detach($company->id);
+        auth()->user()->companySubscriptions()
+            ->where('company_id', $company->id)
+            ->delete();
 
-        return back()->with('message', __('companies.unsubscribed'));
+        return back()->with('success', __('companies.unsubscribed'));
     }
 }

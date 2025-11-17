@@ -317,35 +317,20 @@ export interface OnboardingData {
 }
 
 // Add these types to your existing resources/js/types/index.d.ts file
+// ==================== Companies & Trading ====================
 
 export interface CompanyType {
     id: number;
     name_en: string;
     name_ar: string;
     slug: string;
+    created_at: string;
+    updated_at: string;
 }
 
-export interface Company {
+export interface CompanyStatistic {
     id: number;
-    symbol: string;
-    name_en: string;
-    name_ar: string;
-    current_price: string;
-    price_change: string;
-    change_percentage: string;
-    description_en?: string;
-    description_ar?: string;
-    ceo?: string;
-    headquarter_en?: string;
-    headquarter_ar?: string;
-    type: CompanyType;
-    is_favorited: boolean;
-    is_subscribed?: boolean;
-    statistics?: CompanyStatistics;
-    news?: CompanyNews[];
-}
-
-export interface CompanyStatistics {
+    company_id: number;
     market_cap: string | null;
     value_today: string | null;
     adtv_6m: string | null;
@@ -354,22 +339,290 @@ export interface CompanyStatistics {
     dividend_yield: string | null;
     week_52_high: string | null;
     week_52_low: string | null;
+    enterprise_value: string | null;
+    price_to_sales_ratio: string | null;
+    price_to_book_ratio: string | null;
+    forward_pe: string | null;
+    peg_ratio: string | null;
+    ev_to_revenue: string | null;
+    ev_to_ebitda: string | null;
+    profit_margin: string | null;
+    operating_margin: string | null;
+    return_on_assets: string | null;
+    return_on_equity: string | null;
+    revenue: string | null;
+    revenue_per_share: string | null;
+    quarterly_revenue_growth: string | null;
+    gross_profit: string | null;
+    ebitda: string | null;
+    net_income_to_common: string | null;
+    trailing_eps: string | null;
+    forward_eps: string | null;
+    quarterly_earnings_growth: string | null;
+    beta: string | null;
+    '52_week_change': string | null;
+    sp500_52_week_change: string | null;
+    shares_outstanding: number | null;
+    shares_float: number | null;
+    percent_held_by_insiders: string | null;
+    percent_held_by_institutions: string | null;
+    shares_short: number | null;
+    short_ratio: string | null;
+    short_percent_of_float: string | null;
+    payout_ratio: string | null;
+    dividend_date: string | null;
+    ex_dividend_date: string | null;
+    last_split_date: string | null;
+    last_split_factor: string | null;
+    total_cash: string | null;
+    total_cash_per_share: string | null;
+    total_debt: string | null;
+    debt_to_equity: string | null;
+    current_ratio: string | null;
+    book_value_per_share: string | null;
+    operating_cash_flow: string | null;
+    levered_free_cash_flow: string | null;
+    created_at: string;
+    updated_at: string;
 }
 
 export interface CompanyNews {
     id: number;
+    company_id: number;
     title_en: string;
     title_ar: string;
     source: string;
     url: string | null;
     published_at: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface CompanyTimeSeries {
+    id: number;
+    company_id: number;
+    date: string;
+    interval: string;
+    open: string | null;
+    high: string | null;
+    low: string | null;
+    close: string | null;
+    volume: number | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface CompanyTechnicalIndicator {
+    id: number;
+    company_id: number;
+    date: string;
+    interval: string;
+    sma_20: string | null;
+    sma_50: string | null;
+    sma_200: string | null;
+    ema_12: string | null;
+    ema_26: string | null;
+    macd: string | null;
+    macd_signal: string | null;
+    macd_hist: string | null;
+    bb_upper: string | null;
+    bb_middle: string | null;
+    bb_lower: string | null;
+    rsi_14: string | null;
+    stoch_k: string | null;
+    stoch_d: string | null;
+    cci: string | null;
+    roc: string | null;
+    momentum: string | null;
+    obv: string | null;
+    ad: string | null;
+    adosc: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface CompanyFinancial {
+    id: number;
+    company_id: number;
+    fiscal_date: string;
+    period: 'annual' | 'quarterly';
+    statement_type: 'income' | 'balance' | 'cash_flow';
+    revenue: string | null;
+    cost_of_revenue: string | null;
+    gross_profit: string | null;
+    operating_expense: string | null;
+    operating_income: string | null;
+    ebitda: string | null;
+    ebit: string | null;
+    interest_expense: string | null;
+    income_before_tax: string | null;
+    income_tax_expense: string | null;
+    net_income: string | null;
+    eps: string | null;
+    eps_diluted: string | null;
+    weighted_average_shares: number | null;
+    weighted_average_shares_diluted: number | null;
+    total_assets: string | null;
+    current_assets: string | null;
+    cash_and_equivalents: string | null;
+    cash_and_short_term_investments: string | null;
+    accounts_receivable: string | null;
+    inventory: string | null;
+    non_current_assets: string | null;
+    property_plant_equipment: string | null;
+    intangible_assets: string | null;
+    goodwill: string | null;
+    total_liabilities: string | null;
+    current_liabilities: string | null;
+    accounts_payable: string | null;
+    short_term_debt: string | null;
+    non_current_liabilities: string | null;
+    long_term_debt: string | null;
+    shareholders_equity: string | null;
+    retained_earnings: string | null;
+    operating_cash_flow: string | null;
+    capital_expenditure: string | null;
+    free_cash_flow: string | null;
+    investing_cash_flow: string | null;
+    financing_cash_flow: string | null;
+    dividend_payments: string | null;
+    stock_repurchase: string | null;
+    net_change_in_cash: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface CompanyRecommendation {
+    id: number;
+    company_id: number;
+    strong_buy_count: number;
+    buy_count: number;
+    hold_count: number;
+    sell_count: number;
+    strong_sell_count: number;
+    recommendation_mean: string | null;
+    recommendation_key: string | null;
+    price_target_average: string | null;
+    price_target_high: string | null;
+    price_target_low: string | null;
+    price_target_median: string | null;
+    number_of_analysts: number;
+    ai_recommendation: 'STRONG_BUY' | 'BUY' | 'HOLD' | 'SELL' | 'STRONG_SELL' | null;
+    ai_confidence: string | null;
+    ai_reasoning: string | null;
+    last_updated: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface CompanyAnalystRating {
+    id: number;
+    company_id: number;
+    rating_date: string;
+    analyst_name: string | null;
+    analyst_firm: string | null;
+    rating: string | null;
+    previous_rating: string | null;
+    action: 'Maintains' | 'Upgrade' | 'Downgrade' | 'Initiates' | 'Reiterates' | null;
+    price_target: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface CompanyEarning {
+    id: number;
+    company_id: number;
+    earnings_date: string;
+    time: 'Before Hours' | 'After Hours' | 'Time Not Supplied' | null;
+    eps_estimate: string | null;
+    eps_actual: string | null;
+    revenue_estimate: string | null;
+    revenue_actual: string | null;
+    fiscal_date_ending: string | null;
+    period: 'Q1' | 'Q2' | 'Q3' | 'Q4' | 'Annual' | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface CompanyDividend {
+    id: number;
+    company_id: number;
+    ex_date: string;
+    payment_date: string | null;
+    record_date: string | null;
+    declaration_date: string | null;
+    amount: string;
+    adjusted_amount: string | null;
+    currency: string | null;
+    dividend_type: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface CompanySplit {
+    id: number;
+    company_id: number;
+    split_date: string;
+    description: string | null;
+    split_ratio: string | null;
+    from_factor: number | null;
+    to_factor: number | null;
+    created_at: string;
+    updated_at: string;
 }
 
 export interface CompanySubscription {
+    id: number;
+    user_id: number;
+    company_id: number;
     notify_recommendations: boolean;
     notify_updates: boolean;
     notify_news: boolean;
     notify_price_alerts: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface Company {
+    id: number;
+    company_type_id: number;
+    symbol: string;
+    name_en: string;
+    name_ar: string;
+    currency: string | null;
+    exchange: string | null;
+    mic_code: string | null;
+    country: string | null;
+    figi_code: string | null;
+    current_price: string | null;
+    price_change: string | null;
+    change_percentage: string | null;
+    description_en: string | null;
+    description_ar: string | null;
+    ceo: string | null;
+    headquarter_en: string | null;
+    headquarter_ar: string | null;
+    last_updated: string | null;
+    created_at: string;
+    updated_at: string;
+    deleted_at: string | null;
+
+    // Computed attributes
+    is_favorited?: boolean;
+    is_subscribed?: boolean;
+
+    // Relationships
+    type?: CompanyType;
+    statistics?: CompanyStatistic;
+    news?: CompanyNews[];
+    time_series?: CompanyTimeSeries[];
+    technical_indicators?: CompanyTechnicalIndicator[];
+    financials?: CompanyFinancial[];
+    recommendation?: CompanyRecommendation;
+    analyst_ratings?: CompanyAnalystRating[];
+    earnings?: CompanyEarning[];
+    dividends?: CompanyDividend[];
+    splits?: CompanySplit[];
 }
 
 export interface CompanyFilters {

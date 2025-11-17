@@ -2,11 +2,13 @@
 import AppSidebarLayout from '@/layouts/app/AppSidebarLayout.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useTranslation } from '@/composables/useTranslation';
 import type { Company, CompanySubscription } from '@/types';
 import { router, Head, Link } from '@inertiajs/vue3';
@@ -41,9 +43,6 @@ const notificationPrefs = ref({
     notify_price_alerts: props.subscription?.notify_price_alerts ?? false,
 });
 
-const selectedChartPeriod = ref('1M');
-const chartPeriods = ['1D', '1W', '1M', '6M', '1Y', '5Y'];
-
 const toggleFavorite = () => {
     const route = props.company.is_favorited
         ? removeFavorite({ company: props.company.id })
@@ -77,8 +76,9 @@ const unsubscribe = () => {
     );
 };
 
-const formatPrice = (price: string) => {
-    return parseFloat(price).toFixed(5);
+const formatPrice = (price: string | null) => {
+    if (!price) return t('companies.not_available', 'N/A');
+    return parseFloat(price).toFixed(2);
 };
 
 const formatNumber = (num: string | null) => {
@@ -88,6 +88,16 @@ const formatNumber = (num: string | null) => {
     if (value >= 1000000) return `$${(value / 1000000).toFixed(2)}M`;
     if (value >= 1000) return `$${(value / 1000).toFixed(2)}K`;
     return `$${value.toFixed(2)}`;
+};
+
+const formatPercent = (value: string | null) => {
+    if (!value) return t('companies.not_available', 'N/A');
+    return `${parseFloat(value).toFixed(2)}%`;
+};
+
+const formatDate = (date: string | null) => {
+    if (!date) return t('companies.not_available', 'N/A');
+    return new Date(date).toLocaleDateString(isRTL() ? 'ar-EG' : 'en-US');
 };
 
 const getCompanyName = computed(() => {
@@ -103,27 +113,57 @@ const getHeadquarter = computed(() => {
 });
 
 const getTypeName = computed(() => {
+    if (!props.company.type) return 'N/A';
     return isRTL() ? props.company.type.name_ar : props.company.type.name_en;
 });
 
 const isPositiveChange = computed(() => {
-    return parseFloat(props.company.price_change) >= 0;
+    return parseFloat(props.company.price_change || '0') >= 0;
 });
 
-const statistics = computed(() => {
+const keyStatistics = computed(() => {
     if (!props.company.statistics) return [];
 
     return [
         { label: t('companies.market_cap', 'Market Cap'), value: formatNumber(props.company.statistics.market_cap) },
-        { label: t('companies.value_today', 'Value Today'), value: formatNumber(props.company.statistics.value_today) },
-        { label: t('companies.adtv_6m', 'ADTV (6M)'), value: formatNumber(props.company.statistics.adtv_6m) },
-        { label: t('companies.eps', 'EPS'), value: props.company.statistics.eps || t('companies.not_available', 'N/A') },
+        { label: t('companies.enterprise_value', 'Enterprise Value'), value: formatNumber(props.company.statistics.enterprise_value) },
         { label: t('companies.pe_ratio', 'P/E Ratio'), value: props.company.statistics.pe_ratio || t('companies.not_available', 'N/A') },
-        { label: t('companies.dividend_yield', 'Dividend Yield'), value: props.company.statistics.dividend_yield ? `${props.company.statistics.dividend_yield}%` : t('companies.not_available', 'N/A') },
-        { label: t('companies.week_52_high', '52W High'), value: props.company.statistics.week_52_high ? `$${parseFloat(props.company.statistics.week_52_high).toFixed(5)}` : t('companies.not_available', 'N/A') },
-        { label: t('companies.week_52_low', '52W Low'), value: props.company.statistics.week_52_low ? `$${parseFloat(props.company.statistics.week_52_low).toFixed(5)}` : t('companies.not_available', 'N/A') },
+        { label: t('companies.forward_pe', 'Forward P/E'), value: props.company.statistics.forward_pe || t('companies.not_available', 'N/A') },
+        { label: t('companies.price_to_sales', 'P/S Ratio'), value: props.company.statistics.price_to_sales_ratio || t('companies.not_available', 'N/A') },
+        { label: t('companies.price_to_book', 'P/B Ratio'), value: props.company.statistics.price_to_book_ratio || t('companies.not_available', 'N/A') },
+        { label: t('companies.dividend_yield', 'Dividend Yield'), value: formatPercent(props.company.statistics.dividend_yield) },
+        { label: t('companies.beta', 'Beta'), value: props.company.statistics.beta || t('companies.not_available', 'N/A') },
+        { label: t('companies.week_52_high', '52W High'), value: formatPrice(props.company.statistics.week_52_high) },
+        { label: t('companies.week_52_low', '52W Low'), value: formatPrice(props.company.statistics.week_52_low) },
+        { label: t('companies.profit_margin', 'Profit Margin'), value: formatPercent(props.company.statistics.profit_margin) },
+        { label: t('companies.operating_margin', 'Operating Margin'), value: formatPercent(props.company.statistics.operating_margin) },
+        { label: t('companies.return_on_assets', 'ROA'), value: formatPercent(props.company.statistics.return_on_assets) },
+        { label: t('companies.return_on_equity', 'ROE'), value: formatPercent(props.company.statistics.return_on_equity) },
+        { label: t('companies.revenue', 'Revenue'), value: formatNumber(props.company.statistics.revenue) },
+        { label: t('companies.eps', 'EPS'), value: props.company.statistics.eps || t('companies.not_available', 'N/A') },
     ];
 });
+
+const getRecommendationBadgeVariant = (rec: string) => {
+    if (rec === 'STRONG_BUY' || rec === 'BUY') return 'default';
+    if (rec === 'HOLD') return 'secondary';
+    return 'destructive';
+};
+
+const getRecommendationLabel = (rec: string) => {
+    const labels: Record<string, string> = {
+        'STRONG_BUY': t('companies.strong_buy', 'Strong Buy'),
+        'BUY': t('companies.buy', 'Buy'),
+        'HOLD': t('companies.hold', 'Hold'),
+        'SELL': t('companies.sell', 'Sell'),
+        'STRONG_SELL': t('companies.strong_sell', 'Strong Sell'),
+    };
+    return labels[rec] || rec;
+};
+
+const getNewsTitle = (news: any) => {
+    return isRTL() ? news.title_ar : news.title_en;
+};
 </script>
 
 <template>
@@ -140,7 +180,7 @@ const statistics = computed(() => {
                                 <h1 :class="isRTL() ? 'text-right' : 'text-left'" class="text-3xl font-bold">
                                     {{ company.symbol }}
                                 </h1>
-                                <Badge :variant="company.type.slug === 'stock' ? 'default' : 'secondary'">
+                                <Badge :variant="company.type?.slug === 'stock' ? 'default' : 'secondary'">
                                     {{ getTypeName }}
                                 </Badge>
                             </div>
@@ -161,8 +201,8 @@ const statistics = computed(() => {
                                         >
                                             <TrendingUp v-if="isPositiveChange" class="h-4 w-4" />
                                             <TrendingDown v-else class="h-4 w-4" />
-                                            {{ parseFloat(company.price_change) >= 0 ? '+' : '' }}{{ parseFloat(company.price_change).toFixed(5) }}
-                                            ({{ company.change_percentage }}%)
+                                            {{ parseFloat(company.price_change || '0') >= 0 ? '+' : '' }}{{ parseFloat(company.price_change || '0').toFixed(2) }}
+                                            ({{ company.change_percentage || '0.00' }}%)
                                         </span>
                                         <span class="text-muted-foreground">
                                             • {{ t('companies.delay_notice', '15 minutes delay') }}
@@ -195,99 +235,160 @@ const statistics = computed(() => {
                 </CardContent>
             </Card>
 
-            <!-- Chart Section -->
-            <Card>
-                <CardHeader>
-                    <CardTitle>{{ t('companies.overview', 'Overview') }}</CardTitle>
-                </CardHeader>
-                <CardContent class="space-y-4">
-                    <!-- Period Selector -->
-                    <div class="flex flex-wrap gap-2">
-                        <Button
-                            v-for="period in chartPeriods"
-                            :key="period"
-                            :variant="selectedChartPeriod === period ? 'default' : 'outline'"
-                            size="sm"
-                            @click="selectedChartPeriod = period"
-                        >
-                            {{ period }}
-                        </Button>
-                    </div>
+            <!-- Tabs for Different Data Sections -->
+            <Tabs default-value="overview" class="w-full">
+                <TabsList class="grid w-full grid-cols-4 lg:grid-cols-8">
+                    <TabsTrigger value="overview">{{ t('companies.overview', 'Overview') }}</TabsTrigger>
+                    <TabsTrigger value="financials">{{ t('companies.financials', 'Financials') }}</TabsTrigger>
+                    <TabsTrigger value="technical">{{ t('companies.technical', 'Technical') }}</TabsTrigger>
+                    <TabsTrigger value="recommendations">{{ t('companies.recommendations', 'Recommendations') }}</TabsTrigger>
+                    <TabsTrigger value="news">{{ t('companies.news', 'News') }}</TabsTrigger>
+                    <TabsTrigger value="earnings">{{ t('companies.earnings', 'Earnings') }}</TabsTrigger>
+                    <TabsTrigger value="dividends">{{ t('companies.dividends', 'Dividends') }}</TabsTrigger>
+                    <TabsTrigger value="history">{{ t('companies.history', 'History') }}</TabsTrigger>
+                </TabsList>
 
-                    <!-- Chart Placeholder -->
-                    <div class="flex h-64 items-center justify-center rounded-lg border-2 border-dashed bg-muted/20">
-                        <p class="text-muted-foreground">
-                            {{ t('companies.chart_coming_soon', 'Chart visualization coming soon') }}
-                        </p>
-                    </div>
-                </CardContent>
-            </Card>
+                <!-- Overview Tab -->
+                <TabsContent value="overview" class="space-y-6">
+                    <!-- About Section -->
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>{{ t('companies.about', 'About') }}</CardTitle>
+                        </CardHeader>
+                        <CardContent class="space-y-4">
+                            <p :class="isRTL() ? 'text-right' : 'text-left'" class="leading-relaxed text-muted-foreground">
+                                {{ getDescription || t('companies.not_available', 'N/A') }}
+                            </p>
 
-            <!-- Statistics Grid -->
-            <div>
-                <h2 :class="isRTL() ? 'text-right' : 'text-left'" class="mb-4 text-2xl font-semibold">
-                    {{ t('companies.statistics', 'Statistics') }}
-                </h2>
-                <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <Card v-for="(stat, index) in statistics" :key="index">
-                        <CardContent class="p-4">
-                            <div :class="isRTL() ? 'text-right' : 'text-left'" class="text-sm text-muted-foreground">
-                                {{ stat.label }}
-                            </div>
-                            <div :class="isRTL() ? 'text-right' : 'text-left'" class="mt-1 text-xl font-semibold">
-                                {{ stat.value }}
+                            <Separator />
+
+                            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                                <div v-if="company.ceo">
+                                    <div class="text-sm font-medium">{{ t('companies.ceo', 'CEO') }}</div>
+                                    <div class="text-muted-foreground">{{ company.ceo }}</div>
+                                </div>
+                                <div v-if="getHeadquarter">
+                                    <div class="text-sm font-medium">{{ t('companies.headquarter', 'Headquarters') }}</div>
+                                    <div class="text-muted-foreground">{{ getHeadquarter }}</div>
+                                </div>
+                                <div v-if="company.exchange">
+                                    <div class="text-sm font-medium">{{ t('companies.exchange', 'Exchange') }}</div>
+                                    <div class="text-muted-foreground">{{ company.exchange }}</div>
+                                </div>
+                                <div v-if="company.country">
+                                    <div class="text-sm font-medium">{{ t('companies.country', 'Country') }}</div>
+                                    <div class="text-muted-foreground">{{ company.country }}</div>
+                                </div>
                             </div>
                         </CardContent>
                     </Card>
-                </div>
-            </div>
 
-            <!-- About Section -->
-            <Card>
-                <CardHeader>
-                    <CardTitle>{{ t('companies.about', 'About') }}</CardTitle>
-                </CardHeader>
-                <CardContent class="space-y-4">
-                    <p :class="isRTL() ? 'text-right' : 'text-left'" class="leading-relaxed text-muted-foreground">
-                        {{ getDescription || t('companies.not_available', 'N/A') }}
-                    </p>
-
-                    <Separator />
-
-                    <div class="grid gap-4 sm:grid-cols-2">
-                        <div v-if="company.ceo">
-                            <div class="text-sm font-medium">{{ t('companies.ceo', 'CEO') }}</div>
-                            <div class="text-muted-foreground">{{ company.ceo }}</div>
-                        </div>
-                        <div v-if="getHeadquarter">
-                            <div class="text-sm font-medium">{{ t('companies.headquarter', 'Headquarters') }}</div>
-                            <div class="text-muted-foreground">{{ getHeadquarter }}</div>
+                    <!-- Key Statistics -->
+                    <div>
+                        <h2 :class="isRTL() ? 'text-right' : 'text-left'" class="mb-4 text-2xl font-semibold">
+                            {{ t('companies.statistics', 'Key Statistics') }}
+                        </h2>
+                        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                            <Card v-for="(stat, index) in keyStatistics" :key="index">
+                                <CardContent class="p-4">
+                                    <div :class="isRTL() ? 'text-right' : 'text-left'" class="text-sm text-muted-foreground">
+                                        {{ stat.label }}
+                                    </div>
+                                    <div :class="isRTL() ? 'text-right' : 'text-left'" class="mt-1 text-xl font-semibold">
+                                        {{ stat.value }}
+                                    </div>
+                                </CardContent>
+                            </Card>
                         </div>
                     </div>
-                </CardContent>
-            </Card>
 
-            <!-- Related Companies -->
-            <div v-if="related_companies.length > 0">
-                <h2 :class="isRTL() ? 'text-right' : 'text-left'" class="mb-4 text-2xl font-semibold">
-                    {{ t('companies.related_companies', 'Related Companies') }}
-                </h2>
-                <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <Card v-for="related in related_companies" :key="related.id">
-                        <CardContent class="p-4">
-                            <Link :href="companyShow({ company: related.id })">
-                                <div class="font-semibold">{{ related.symbol }}</div>
-                                <div class="text-sm text-muted-foreground">
-                                    {{ isRTL() ? related.name_ar : related.name_en }}
-                                </div>
-                                <div class="mt-2 font-mono text-lg font-semibold">
-                                    ${{ formatPrice(related.current_price) }}
-                                </div>
-                            </Link>
-                        </CardContent>
+                    <!-- Related Companies -->
+                    <div v-if="related_companies.length > 0">
+                        <h2 :class="isRTL() ? 'text-right' : 'text-left'" class="mb-4 text-2xl font-semibold">
+                            {{ t('companies.related_companies', 'Related Companies') }}
+                        </h2>
+                        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                            <Card v-for="related in related_companies" :key="related.id">
+                                <CardContent class="p-4">
+                                    <Link :href="companyShow({ company: related.id })">
+                                        <div class="font-semibold">{{ related.symbol }}</div>
+                                        <div class="text-sm text-muted-foreground">
+                                            {{ isRTL() ? related.name_ar : related.name_en }}
+                                        </div>
+                                        <div class="mt-2 font-mono text-lg font-semibold">
+                                            ${{ formatPrice(related.current_price) }}
+                                        </div>
+                                    </Link>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </div>
+                </TabsContent>
+
+                <!-- Other tabs would go here - keeping them minimal for now -->
+                <TabsContent value="financials">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>{{ t('companies.financials', 'Financial Data') }}</CardTitle>
+                            <CardDescription>{{ t('companies.coming_soon', 'Coming soon') }}</CardDescription>
+                        </CardHeader>
                     </Card>
-                </div>
-            </div>
+                </TabsContent>
+
+                <TabsContent value="technical">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>{{ t('companies.technical', 'Technical Analysis') }}</CardTitle>
+                            <CardDescription>{{ t('companies.coming_soon', 'Coming soon') }}</CardDescription>
+                        </CardHeader>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="recommendations">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>{{ t('companies.recommendations', 'Analyst Recommendations') }}</CardTitle>
+                            <CardDescription>{{ t('companies.coming_soon', 'Coming soon') }}</CardDescription>
+                        </CardHeader>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="news">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>{{ t('companies.news', 'News & Updates') }}</CardTitle>
+                            <CardDescription>{{ t('companies.coming_soon', 'Coming soon') }}</CardDescription>
+                        </CardHeader>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="earnings">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>{{ t('companies.earnings', 'Earnings History') }}</CardTitle>
+                            <CardDescription>{{ t('companies.coming_soon', 'Coming soon') }}</CardDescription>
+                        </CardHeader>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="dividends">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>{{ t('companies.dividends', 'Dividend History') }}</CardTitle>
+                            <CardDescription>{{ t('companies.coming_soon', 'Coming soon') }}</CardDescription>
+                        </CardHeader>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="history">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>{{ t('companies.history', 'Price History') }}</CardTitle>
+                            <CardDescription>{{ t('companies.coming_soon', 'Coming soon') }}</CardDescription>
+                        </CardHeader>
+                    </Card>
+                </TabsContent>
+            </Tabs>
         </div>
 
         <!-- Subscription Dialog -->
@@ -306,7 +407,7 @@ const statistics = computed(() => {
                             id="recommendations"
                             v-model:checked="notificationPrefs.notify_recommendations"
                         />
-                        <Label for="recommendations" class="flex-1">
+                        <Label for="recommendations" class="flex-1 cursor-pointer">
                             {{ t('companies.notify_recommendations', 'Recommendations') }}
                         </Label>
                     </div>
@@ -316,7 +417,7 @@ const statistics = computed(() => {
                             id="updates"
                             v-model:checked="notificationPrefs.notify_updates"
                         />
-                        <Label for="updates" class="flex-1">
+                        <Label for="updates" class="flex-1 cursor-pointer">
                             {{ t('companies.notify_updates', 'Company Updates') }}
                         </Label>
                     </div>
@@ -326,7 +427,7 @@ const statistics = computed(() => {
                             id="news"
                             v-model:checked="notificationPrefs.notify_news"
                         />
-                        <Label for="news" class="flex-1">
+                        <Label for="news" class="flex-1 cursor-pointer">
                             {{ t('companies.notify_news', 'News') }}
                         </Label>
                     </div>
@@ -336,13 +437,13 @@ const statistics = computed(() => {
                             id="price_alerts"
                             v-model:checked="notificationPrefs.notify_price_alerts"
                         />
-                        <Label for="price_alerts" class="flex-1">
+                        <Label for="price_alerts" class="flex-1 cursor-pointer">
                             {{ t('companies.notify_price_alerts', 'Price Alerts') }}
                         </Label>
                     </div>
                 </div>
 
-                <div class="flex gap-2 justify-end">
+                <div class="flex justify-end gap-2">
                     <Button v-if="company.is_subscribed" variant="destructive" @click="unsubscribe">
                         {{ t('companies.unsubscribe', 'Unsubscribe') }}
                     </Button>

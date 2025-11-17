@@ -17,13 +17,13 @@ class Company extends Model
     protected $fillable = [
         'company_type_id',
         'symbol',
+        'name_en',
+        'name_ar',
         'currency',
         'exchange',
         'mic_code',
         'country',
         'figi_code',
-        'name_en',
-        'name_ar',
         'current_price',
         'price_change',
         'change_percentage',
@@ -42,15 +42,12 @@ class Company extends Model
             'price_change' => 'decimal:5',
             'change_percentage' => 'decimal:2',
             'last_updated' => 'datetime',
-            'created_at' => 'datetime',
-            'updated_at' => 'datetime',
-            'deleted_at' => 'datetime',
         ];
     }
 
-    public function companyType(): BelongsTo
+    public function type(): BelongsTo
     {
-        return $this->belongsTo(CompanyType::class);
+        return $this->belongsTo(CompanyType::class, 'company_type_id');
     }
 
     public function statistics(): HasOne
@@ -63,34 +60,54 @@ class Company extends Model
         return $this->hasMany(CompanyNews::class);
     }
 
+    public function timeSeries(): HasMany
+    {
+        return $this->hasMany(CompanyTimeSeries::class);
+    }
+
+    public function technicalIndicators(): HasMany
+    {
+        return $this->hasMany(CompanyTechnicalIndicator::class);
+    }
+
+    public function financials(): HasMany
+    {
+        return $this->hasMany(CompanyFinancial::class);
+    }
+
+    public function recommendation(): HasOne
+    {
+        return $this->hasOne(CompanyRecommendation::class);
+    }
+
+    public function analystRatings(): HasMany
+    {
+        return $this->hasMany(CompanyAnalystRating::class);
+    }
+
+    public function earnings(): HasMany
+    {
+        return $this->hasMany(CompanyEarning::class);
+    }
+
+    public function dividends(): HasMany
+    {
+        return $this->hasMany(CompanyDividend::class);
+    }
+
+    public function splits(): HasMany
+    {
+        return $this->hasMany(CompanySplit::class);
+    }
+
     public function favoritedBy(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'user_company_favorites')
             ->withTimestamps();
     }
 
-    public function subscribedBy(): BelongsToMany
+    public function subscriptions(): HasMany
     {
-        return $this->belongsToMany(User::class, 'company_subscriptions')
-            ->withPivot(['notify_recommendations', 'notify_updates', 'notify_news', 'notify_price_alerts'])
-            ->withTimestamps();
-    }
-
-    public function isFavoritedBy(?int $userId): bool
-    {
-        if (!$userId) {
-            return false;
-        }
-
-        return $this->favoritedBy()->where('user_id', $userId)->exists();
-    }
-
-    public function isSubscribedBy(?int $userId): bool
-    {
-        if (!$userId) {
-            return false;
-        }
-
-        return $this->subscribedBy()->where('user_id', $userId)->exists();
+        return $this->hasMany(CompanySubscription::class);
     }
 }

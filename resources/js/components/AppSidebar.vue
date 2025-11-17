@@ -16,7 +16,7 @@ import { useTranslation } from '@/composables/useTranslation';
 import { dashboard } from '@/routes';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { LayoutGrid } from 'lucide-vue-next';
+import { Combine, LayoutGrid } from 'lucide-vue-next';
 import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
 
@@ -37,6 +37,11 @@ const mainNavItems: NavItem[] = [
         title: t('nav.dashboard', 'Dashboard'),
         href: dashboard(),
         icon: LayoutGrid,
+    },
+    {
+        title: t('nav.dashboard', 'Companies'),
+        href: 'companies',
+        icon: Combine,
     },
 ];
 

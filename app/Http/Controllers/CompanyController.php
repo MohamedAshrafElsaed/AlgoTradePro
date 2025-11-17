@@ -10,51 +10,43 @@ use Inertia\Response;
 
 class CompanyController extends Controller
 {
-    /**
-     * Display a listing of companies
-     */
     public function index(Request $request): Response
     {
-        $query = Company::with(['companyType', 'statistics'])
-            ->when($request->search, function ($q) use ($request) {
-                $q->where('symbol', 'like', "%{$request->search}%")
-                    ->orWhere('name_en', 'like', "%{$request->search}%")
-                    ->orWhere('name_ar', 'like', "%{$request->search}%");
-            })
-            ->when($request->type, function ($q) use ($request) {
-                $q->where('company_type_id', $request->type);
+        $query = Company::with(['type', 'statistics', 'recommendation'])
+            ->orderBy('symbol');
+
+        // Search
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('symbol', 'like', "%{$search}%")
+                    ->orWhere('name_en', 'like', "%{$search}%")
+                    ->orWhere('name_ar', 'like', "%{$search}%");
             });
+        }
 
-        $companies = $query->paginate(15)->through(function ($company) use ($request) {
-            return [
-                'id' => $company->id,
-                'symbol' => $company->symbol,
-                'name_en' => $company->name_en,
-                'name_ar' => $company->name_ar,
-                'current_price' => $company->current_price,
-                'price_change' => $company->price_change,
-                'change_percentage' => $company->change_percentage,
-                'type' => [
-                    'name_en' => $company->companyType->name_en,
-                    'name_ar' => $company->companyType->name_ar,
-                    'slug' => $company->companyType->slug,
-                ],
-                'is_favorited' => $company->isFavoritedBy($request->user()?->id),
-            ];
-        });
+        // Type filter
+        if ($request->filled('type')) {
+            $query->where('company_type_id', $request->type);
+        }
 
-        $types = CompanyType::all()->map(function ($type) {
-            return [
-                'id' => $type->id,
-                'name_en' => $type->name_en,
-                'name_ar' => $type->name_ar,
-                'slug' => $type->slug,
-            ];
+        $companies = $query->paginate(24)->withQueryString();
+
+        // Get user's favorited company IDs
+        $favoritedIds = auth()->user()
+            ->favoriteCompanies()
+            ->pluck('company_id')
+            ->toArray();
+
+        // Add is_favorited to each company
+        $companies->getCollection()->transform(function ($company) use ($favoritedIds) {
+            $company->is_favorited = in_array($company->id, $favoritedIds);
+            return $company;
         });
 
         return Inertia::render('companies/Index', [
             'companies' => $companies,
-            'types' => $types,
+            'types' => CompanyType::all(),
             'filters' => [
                 'search' => $request->search,
                 'type' => $request->type,
@@ -62,122 +54,70 @@ class CompanyController extends Controller
         ]);
     }
 
-    /**
-     * Display user's favorite companies
-     */
-    public function favorites(Request $request): Response
+    public function show(Company $company): Response
     {
-        $companies = $request->user()
-            ->favoriteCompanies()
-            ->with(['companyType', 'statistics'])
-            ->paginate(15)
-            ->through(function ($company) {
-                return [
-                    'id' => $company->id,
-                    'symbol' => $company->symbol,
-                    'name_en' => $company->name_en,
-                    'name_ar' => $company->name_ar,
-                    'current_price' => $company->current_price,
-                    'price_change' => $company->price_change,
-                    'change_percentage' => $company->change_percentage,
-                    'type' => [
-                        'name_en' => $company->companyType->name_en,
-                        'name_ar' => $company->companyType->name_ar,
-                        'slug' => $company->companyType->slug,
-                    ],
-                    'is_favorited' => true,
-                ];
-            });
+        $company->load([
+            'type',
+            'statistics',
+            'news' => fn($q) => $q->latest('published_at')->limit(10),
+            'recommendation',
+            'analystRatings' => fn($q) => $q->latest('rating_date')->limit(5),
+            'earnings' => fn($q) => $q->latest('earnings_date')->limit(5),
+            'dividends' => fn($q) => $q->latest('ex_date')->limit(5),
+            'splits' => fn($q) => $q->latest('split_date')->limit(5),
+            'timeSeries' => fn($q) => $q->where('interval', '1day')
+                ->where('date', '>=', now()->subDays(30))
+                ->orderBy('date', 'desc'),
+            'technicalIndicators' => fn($q) => $q->where('interval', '1day')
+                ->latest('date')
+                ->limit(1),
+            'financials' => fn($q) => $q->where('period', 'annual')
+                ->latest('fiscal_date')
+                ->limit(5),
+        ]);
 
-        return Inertia::render('companies/Favorites', [
-            'companies' => $companies,
+        // Check if favorited
+        $company->is_favorited = auth()->user()
+            ->favoriteCompanies()
+            ->where('company_id', $company->id)
+            ->exists();
+
+        // Get subscription
+        $subscription = auth()->user()
+            ->subscribedCompanies()
+            ->where('company_id', $company->id)
+            ->first();
+
+        $company->is_subscribed = $subscription !== null;
+
+        // Get related companies (same type)
+        $relatedCompanies = Company::where('company_type_id', $company->company_type_id)
+            ->where('id', '!=', $company->id)
+            ->limit(4)
+            ->get(['id', 'symbol', 'name_en', 'name_ar', 'current_price']);
+
+        return Inertia::render('companies/Show', [
+            'company' => $company,
+            'subscription' => $subscription,
+            'related_companies' => $relatedCompanies,
         ]);
     }
 
-    /**
-     * Display company profile
-     */
-    public function show(Request $request, Company $company): Response
+    public function favorites(): Response
     {
-        $company->load(['companyType', 'statistics', 'news' => function ($query) {
-            $query->latest('published_at')->take(5);
-        }]);
+        $companies = auth()->user()
+            ->favoriteCompanies()
+            ->with(['type', 'statistics'])
+            ->paginate(24);
 
-        $relatedCompanies = Company::with('companyType')
-            ->where('company_type_id', $company->company_type_id)
-            ->where('id', '!=', $company->id)
-            ->take(4)
-            ->get()
-            ->map(function ($related) {
-                return [
-                    'id' => $related->id,
-                    'symbol' => $related->symbol,
-                    'name_en' => $related->name_en,
-                    'name_ar' => $related->name_ar,
-                    'current_price' => $related->current_price,
-                ];
-            });
+        // All are favorited by definition
+        $companies->getCollection()->transform(function ($company) {
+            $company->is_favorited = true;
+            return $company;
+        });
 
-        $subscription = null;
-        if ($request->user()) {
-            $sub = $request->user()->subscribedCompanies()
-                ->where('company_id', $company->id)
-                ->first();
-
-            if ($sub) {
-                $subscription = [
-                    'notify_recommendations' => (bool) $sub->pivot->notify_recommendations,
-                    'notify_updates' => (bool) $sub->pivot->notify_updates,
-                    'notify_news' => (bool) $sub->pivot->notify_news,
-                    'notify_price_alerts' => (bool) $sub->pivot->notify_price_alerts,
-                ];
-            }
-        }
-
-        return Inertia::render('companies/Show', [
-            'company' => [
-                'id' => $company->id,
-                'symbol' => $company->symbol,
-                'name_en' => $company->name_en,
-                'name_ar' => $company->name_ar,
-                'current_price' => $company->current_price,
-                'price_change' => $company->price_change,
-                'change_percentage' => $company->change_percentage,
-                'description_en' => $company->description_en,
-                'description_ar' => $company->description_ar,
-                'ceo' => $company->ceo,
-                'headquarter_en' => $company->headquarter_en,
-                'headquarter_ar' => $company->headquarter_ar,
-                'type' => [
-                    'name_en' => $company->companyType->name_en,
-                    'name_ar' => $company->companyType->name_ar,
-                    'slug' => $company->companyType->slug,
-                ],
-                'statistics' => $company->statistics ? [
-                    'market_cap' => $company->statistics->market_cap,
-                    'value_today' => $company->statistics->value_today,
-                    'adtv_6m' => $company->statistics->adtv_6m,
-                    'eps' => $company->statistics->eps,
-                    'pe_ratio' => $company->statistics->pe_ratio,
-                    'dividend_yield' => $company->statistics->dividend_yield,
-                    'week_52_high' => $company->statistics->week_52_high,
-                    'week_52_low' => $company->statistics->week_52_low,
-                ] : null,
-                'news' => $company->news->map(function ($news) {
-                    return [
-                        'id' => $news->id,
-                        'title_en' => $news->title_en,
-                        'title_ar' => $news->title_ar,
-                        'source' => $news->source,
-                        'url' => $news->url,
-                        'published_at' => $news->published_at->diffForHumans(),
-                    ];
-                }),
-                'is_favorited' => $company->isFavoritedBy($request->user()?->id),
-                'is_subscribed' => $company->isSubscribedBy($request->user()?->id),
-            ],
-            'related_companies' => $relatedCompanies,
-            'subscription' => $subscription,
+        return Inertia::render('companies/Favorites', [
+            'companies' => $companies,
         ]);
     }
 }
